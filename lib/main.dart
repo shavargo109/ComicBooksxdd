@@ -20,10 +20,10 @@ class ThemeNotifier extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   void toggleTheme() {
-    if (_themeMode == ThemeMode.light) {
-      _themeMode = ThemeMode.dark;
-    } else {
+    if (_themeMode != ThemeMode.light) {
       _themeMode = ThemeMode.light;
+    } else {
+      _themeMode = ThemeMode.dark;
     }
     notifyListeners();
   }
@@ -42,12 +42,6 @@ class MyApp extends StatelessWidget {
           themeMode: themeNotifier.themeMode,
           home: Scaffold(
             appBar: AppBar(
-              // title: const Center(
-              //   child: Text(
-              //     'test',
-              //     style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-              //   ),
-              // ),
               backgroundColor: Colors.blue,
               actions: [
                 IconButton(
@@ -77,30 +71,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Widget content = Container();
+  Future<List<Book>>? _futureBooks;
   int _selectedButtonIndex =
       -1; // Variable to keep track of the selected button
 
-  void _web(bool isLatest) async {
-    final books = await fetchLatestBooks(isLatest);
-    setState(() {
-      content = ListView.builder(
-        key: ObjectKey(books[0]),
-        itemCount: books.length,
-        itemBuilder: (context, index) {
-          final book = books[index];
-          final colorCode = index % 2 == 0 ? 100 : 300;
-          return BookItem(
-            book: book,
-            colorCode: colorCode,
-            isInterested: false,
-          );
-        },
-      );
-    });
+  Future<List<Book>> fetchBooks(bool isLatest) async {
+    return await fetchLatestBooks(isLatest);
   }
 
-  void interestedBook() async {
+  Future<List<Book>> fetchInterestedBooks() async {
     final books = await fetchLatestBooks(true);
     final data = await readMessage();
     final savedBooks = data['book'] as List<Book>;
@@ -113,103 +92,33 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
-    String text = '';
-    if (savedBooks.isEmpty) {
-      text =
-          "No interested books saved! Please go to 'Today' to update your list!";
-    } else if (interestedBooks.isEmpty) {
-      text = "No interested books updated!";
-    }
-
-    setState(() {
-      content = text.isEmpty
-          ? ListView.builder(
-              key: ObjectKey(books[0]),
-              itemCount: interestedBooks.length,
-              itemBuilder: (context, index) {
-                final book = interestedBooks[index];
-                final colorCode = index % 2 == 0 ? 100 : 300;
-                return BookItem(
-                  book: book,
-                  colorCode: colorCode,
-                  isInterested: true,
-                );
-              },
-            )
-          : Flex(
-              direction: Axis.horizontal,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    text,
-                  ),
-                ),
-              ],
-            );
-    });
+    return interestedBooks;
   }
 
-  void allTime() async {
+  Future<List<Book>> fetchAllTimeBooks() async {
     final data = await readMessage();
-    final books = data['book'] as List<Book>;
-    String text = '';
-    if (books.isEmpty) {
-      text =
-          "No interested books saved! Please go to 'Today' to update your list!";
-    }
-    setState(() {
-      content = text.isEmpty
-          ? ListView.builder(
-              key: ObjectKey(books[0]),
-              itemCount: books.length,
-              itemBuilder: (context, index) {
-                final book = books[index];
-                final colorCode = index % 2 == 0 ? 100 : 300;
-                return BookItem(
-                  book: book,
-                  colorCode: colorCode,
-                  isInterested: true,
-                );
-              },
-            )
-          : Flex(
-              direction: Axis.horizontal,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    text,
-                  ),
-                ),
-              ],
-            );
-    });
+    return data['book'] as List<Book>;
   }
 
   void _onButtonPressed(int index) {
     setState(() {
       _selectedButtonIndex = index;
-    });
 
-    switch (index) {
-      case 0:
-        interestedBook();
-        break;
-      case 1:
-        _web(true);
-        break;
-      case 2:
-        _web(false);
-        break;
-      case 3:
-        allTime();
-        break;
-    }
+      switch (index) {
+        case 0:
+          _futureBooks = fetchInterestedBooks();
+          break;
+        case 1:
+          _futureBooks = fetchBooks(true);
+          break;
+        case 2:
+          _futureBooks = fetchBooks(false);
+          break;
+        case 3:
+          _futureBooks = fetchAllTimeBooks();
+          break;
+      }
+    });
   }
 
   ButtonStyle _buttonStyle(int index) {
@@ -239,9 +148,46 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         Expanded(
-          child: content,
+          child: _futureBooks == null
+              ? const Center(
+                  child: Text(
+                  "XDD",
+                  style: TextStyle(
+                    fontSize: 20.0,
+                  ),
+                ))
+              : FutureBuilder<List<Book>>(
+                  future: _futureBooks,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text("Error: ${snapshot.error}"));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                          child: Text(
+                              textAlign: TextAlign.center,
+                              "No interested books saved! Please go to 'Today' to update your list!"));
+                    } else {
+                      final books = snapshot.data!;
+                      return ListView.builder(
+                        key: ObjectKey(books[0]),
+                        itemCount: books.length,
+                        itemBuilder: (context, index) {
+                          final book = books[index];
+                          final colorCode = index % 2 == 0 ? 100 : 300;
+                          return BookItem(
+                            book: book,
+                            colorCode: colorCode,
+                            isInterested: _selectedButtonIndex == 0 ||
+                                _selectedButtonIndex == 3,
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
         ),
-        // const SizedBox(height: 10), // Add spacing between content and buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -279,7 +225,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        // const SizedBox(height: 5), // Add padding at the bottom
       ],
     );
   }
