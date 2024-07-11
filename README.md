@@ -1,16 +1,16 @@
-# tutorial
+# ComicBooksxdd
 
-A new Flutter project.
+An app for fetching comic books from manhuagui, save interested comic books in local. If there is update on interested books today, if will show all the books there. 
+Basically a web scraping exercise app xdd
 
 ## Getting Started
+![alt text](https://github.com/shavargo109/flutter-first-project-/blob/main/docs/Screenshot%20from%202024-07-09%2010-54-47.png)
 
-This project is a starting point for a Flutter application.
+First icon is your interested books update on today. All the today's interested books will be listed there
 
-A few resources to get you started if this is your first Flutter project:
+Second icon is all the books updated on today. You can add the books into your interested list by pressing "Interested!"
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Third icon is the same as second icon but it shows all the books updated on yesterday
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Forth icon is all the interested books saved
+
