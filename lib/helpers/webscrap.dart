@@ -19,7 +19,7 @@ class Book {
 
   static String getCover(int code) {
     var codeString = code.toString();
-    return ('https://cf.mhgui.com/cpic/h/$codeString.jpg');
+    return ('https://cf.mhgui.com/cpic/h/${codeString}_10.jpg');
   }
 
   Map<String, dynamic> toJson() {

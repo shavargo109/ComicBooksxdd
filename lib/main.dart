@@ -55,6 +55,14 @@ class MyApp extends StatelessWidget {
                 ),
               ],
             ),
+            drawer: Drawer(
+              child: Container(
+                color: Colors.green, // 深綠色背景
+                child: const Center(
+                  child: Text("側邊欄", style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ),
             body: const HomePage(),
           ),
         );
@@ -79,8 +87,8 @@ class _HomePageState extends State<HomePage> {
     return await fetchLatestBooks(isLatest);
   }
 
-  Future<List<Book>> fetchInterestedBooks() async {
-    final books = await fetchLatestBooks(true);
+  Future<List<Book>> fetchInterestedBooks(bool isLatest) async {
+    final books = await fetchLatestBooks(isLatest);
     final data = await readMessage();
     final savedBooks = data['book'] as List<Book>;
     List<Book> interestedBooks = [];
@@ -106,7 +114,7 @@ class _HomePageState extends State<HomePage> {
 
       switch (index) {
         case 0:
-          _futureBooks = fetchInterestedBooks();
+          _futureBooks = fetchInterestedBooks(true);
           break;
         case 1:
           _futureBooks = fetchBooks(true);
@@ -116,6 +124,9 @@ class _HomePageState extends State<HomePage> {
           break;
         case 3:
           _futureBooks = fetchAllTimeBooks();
+          break;
+        case 4:
+          _futureBooks = fetchInterestedBooks(false);
           break;
       }
     });
@@ -197,6 +208,14 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.thumb_up_outlined),
                 selectedIcon: const Icon(Icons.thumb_up),
                 onPressed: () => _onButtonPressed(0),
+              ),
+            ),
+            Expanded(
+              child: IconButton.filled(
+                style: _buttonStyle(4),
+                icon: const Icon(Icons.snowshoeing_outlined),
+                selectedIcon: const Icon(Icons.snowshoeing_outlined),
+                onPressed: () => _onButtonPressed(4),
               ),
             ),
             Expanded(
