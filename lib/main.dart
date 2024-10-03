@@ -135,19 +135,19 @@ class _HomePageState extends State<HomePage> {
   ButtonStyle _buttonStyle(int index) {
     bool isSelected = _selectedButtonIndex == index;
     return ButtonStyle(
-      foregroundColor: MaterialStateProperty.all<Color>(
-        isSelected ? Theme.of(context).colorScheme.background : Colors.blue,
+      foregroundColor: WidgetStateProperty.all<Color>(
+        isSelected ? Theme.of(context).colorScheme.surface : Colors.blue,
       ),
-      backgroundColor: MaterialStateProperty.all<Color>(
-        isSelected ? Colors.blue : Theme.of(context).colorScheme.background,
+      backgroundColor: WidgetStateProperty.all<Color>(
+        isSelected ? Colors.blue : Theme.of(context).colorScheme.surface,
       ),
-      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
         RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
           side: BorderSide(
             color: isSelected
                 ? Colors.blue
-                : Theme.of(context).colorScheme.background,
+                : Theme.of(context).colorScheme.surface,
           ),
         ),
       ),
