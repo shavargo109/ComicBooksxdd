@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to save PDF files to your storage.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>We need access to save PDF files to your storage.</string>
+
 </dict>
 </plist>
