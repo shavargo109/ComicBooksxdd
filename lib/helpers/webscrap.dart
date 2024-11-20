@@ -106,19 +106,34 @@ Future<List<Episode>> fetchEpisode(int code) async {
 
     if (response.statusCode == 200) {
       var document = parser.parse(utf8.decode(response.bodyBytes));
-      var results = document.querySelector('.chapter-list.cf.mt10'); // today
-      var asd = results?.children.last;
-      var epi = asd?.querySelectorAll('li');
+      var warning = document.querySelector('.warning-bar');
+      var results = document.querySelectorAll('.chapter-list.cf.mt10');
+      // if there is warning content blocked, decode it to process
+      if (warning != null) {
+        var encodedData =
+            document.querySelectorAll('input').last.attributes['value'];
+        final decompressedData =
+            await LZString.decompressFromBase64(encodedData);
+        final fakeDocument = parser.parse(decompressedData);
+        results = fakeDocument.querySelectorAll('.chapter-list.cf.mt10');
+      }
 
-      for (var book in epi!) {
-        var ep = book.querySelector('a')?.attributes['title'];
-        var link = book.querySelector('a')?.attributes['href'];
-        var em = book.querySelector('em')?.attributes['class'];
-        if (ep != null && link != null) {
-          Episode episode = em != null
-              ? Episode(episode: ep, link: link, em: em)
-              : Episode(episode: ep, link: link, em: 'old');
-          episodeArray.add(episode);
+      for (var epiArray in results) {
+        var epiBlocks = epiArray.querySelectorAll('ul');
+        for (var epiBlock in epiBlocks.reversed) {
+          var epi = epiBlock.querySelectorAll('li');
+          for (var book in epi) {
+            var ep = book.querySelector('a')?.attributes['title'];
+            var link = book.querySelector('a')?.attributes['href'];
+            var em = book.querySelector('em')?.attributes['class'];
+            if (ep != null && link != null) {
+              Episode episode = em != null
+                  ? Episode(episode: ep, link: link, em: em)
+                  : Episode(episode: ep, link: link, em: 'old');
+              episodeArray.add(episode);
+              // print('$ep,$link,$em');
+            }
+          }
         }
       }
       return episodeArray;
