@@ -221,6 +221,7 @@ Stream<Uint8List> getImagedataStream(Map<String, dynamic> episodeData) async* {
     };
     try {
       final uri = Uri.parse(pgUrl).replace(queryParameters: params);
+      await Future.delayed(const Duration(milliseconds: 500));
       final response = await http.get(uri, headers: header);
       if (response.statusCode == 200) {
         yield response.bodyBytes; // Emit each image immediately
