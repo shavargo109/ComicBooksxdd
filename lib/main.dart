@@ -55,6 +55,17 @@ class MyApp extends StatelessWidget {
           themeMode: value.item1, // Listen to themeMode directly
           home: Scaffold(
             appBar: AppBar(
+              leading: Builder(
+                builder: (context) {
+                  return IconButton(
+                    icon: const Icon(Icons.menu),
+                    color: Colors.white,
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  );
+                },
+              ),
               backgroundColor: value.item2
                   ? Colors.green
                   : Colors.blue, // Updated based on isReadingMode
@@ -78,6 +89,9 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+
 
 class ModeDrawer extends StatelessWidget {
   const ModeDrawer({super.key});
@@ -120,7 +134,7 @@ class ModeDrawer extends StatelessWidget {
                 //     onPressed: () => fetchEpisode(47194),
                 //     child: Text('testing2')),
                 // TextButton(
-                //     onPressed: () => fetchEpisode(39903),
+                //     onPressed: () => fetchEpisode(52741),
                 //     child: Text('testing3')),
               ],
             ),
