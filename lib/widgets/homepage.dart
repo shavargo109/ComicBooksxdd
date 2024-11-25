@@ -46,6 +46,30 @@ class _HomePageState extends State<HomePage> {
     return data['book'] as List<Book>;
   }
 
+  Future<void> _dialogBuilder(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: TextField(
+            // obscureText: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'Search',
+            ),
+            onSubmitted: (String value) async {
+              Navigator.pop(context);
+              setState(() {
+                _selectedButtonIndex = 5;
+                _futureBooks = searchResult(value);
+              });
+            },
+          ),
+        );
+      },
+    );
+  }
+
   void _onButtonPressed(int index) {
     setState(() {
       _selectedButtonIndex = index;
@@ -115,10 +139,18 @@ class _HomePageState extends State<HomePage> {
                     } else if (snapshot.hasError) {
                       return Center(child: Text("Error: ${snapshot.error}"));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(
-                          child: Text(
-                              textAlign: TextAlign.center,
-                              "No interested books saved! Please go to 'Today' to update your list!"));
+                      if (_selectedButtonIndex == 0 ||
+                          _selectedButtonIndex == 4) {
+                        return const Center(
+                            child: Text(
+                                textAlign: TextAlign.center,
+                                "No interested books saved! Please add your favourite books to the list!"));
+                      } else {
+                        return const Center(
+                            child: Text(
+                                textAlign: TextAlign.center,
+                                "No data found!!"));
+                      }
                     } else {
                       final books = snapshot.data!;
                       return ListView.builder(
@@ -130,8 +162,8 @@ class _HomePageState extends State<HomePage> {
                           return BookItem(
                             book: book,
                             colorCode: colorCode,
-                            isInterested: _selectedButtonIndex == 0 ||
-                                _selectedButtonIndex == 3,
+                            isInterested: _selectedButtonIndex == 1 ||
+                                _selectedButtonIndex == 2,
                             isReadingMode: widget.isReadingMode,
                           );
                         },
@@ -181,6 +213,14 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.bookmark_added_outlined),
                 selectedIcon: const Icon(Icons.bookmark_added),
                 onPressed: () => _onButtonPressed(3),
+              ),
+            ),
+            Expanded(
+              child: IconButton.filled(
+                style: _buttonStyle(5, modeNotifier),
+                icon: const Icon(Icons.search),
+                selectedIcon: const Icon(Icons.search),
+                onPressed: () => _dialogBuilder(context),
               ),
             ),
           ],

@@ -21,14 +21,14 @@ class Book {
   Book({required this.title, required this.ep, required this.code});
 
   static String getURL(int code) {
-    var codeString = code.toString();
+    final codeString = code.toString();
     return Platform.isAndroid || Platform.isIOS
         ? ('https://m.manhuagui.com/comic/$codeString/')
         : ('https://tw.manhuagui.com/comic/$codeString/');
   }
 
   static String getCover(int code) {
-    var codeString = code.toString();
+    final codeString = code.toString();
     return ('https://cf.mhgui.com/cpic/h/$codeString.jpg');
   }
 
@@ -59,16 +59,16 @@ Future<List<Book>> fetchLatestBooks(bool isLatest) async {
     ).timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
-      var document = parser.parse(utf8.decode(response.bodyBytes));
+      final document = parser.parse(utf8.decode(response.bodyBytes));
       var results = isLatest
           ? document.querySelectorAll('.latest-list')[0] // today
           : document.querySelectorAll('.latest-list')[1]; // yesterday
-      var booksElements = results.querySelectorAll("li");
+      final booksElements = results.querySelectorAll("li");
       List<Book> books = [];
       for (var element in booksElements) {
-        var titleElement = element.querySelector('p.ell');
-        var epElement = element.querySelector('.tt');
-        var codeAttribute = element.querySelector('a')?.attributes['href'];
+        final titleElement = element.querySelector('p.ell');
+        final epElement = element.querySelector('.tt');
+        final codeAttribute = element.querySelector('a')?.attributes['href'];
 
         if (titleElement != null &&
             epElement != null &&
@@ -92,7 +92,7 @@ Future<List<Book>> fetchLatestBooks(bool isLatest) async {
 }
 
 Future<List<Episode>> fetchEpisode(int code) async {
-  var codeString = code.toString();
+  final codeString = code.toString();
   List<Episode> episodeArray = [];
   try {
     final response = await http.get(
@@ -105,12 +105,12 @@ Future<List<Episode>> fetchEpisode(int code) async {
     ).timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
-      var document = parser.parse(utf8.decode(response.bodyBytes));
-      var warning = document.querySelector('.warning-bar');
+      final document = parser.parse(utf8.decode(response.bodyBytes));
+      final warning = document.querySelector('.warning-bar');
       var results = document.querySelectorAll('.chapter-list.cf.mt10');
       // if there is warning content blocked, decode it to process
       if (warning != null) {
-        var encodedData =
+        final encodedData =
             document.querySelectorAll('input').last.attributes['value'];
         final decompressedData =
             await LZString.decompressFromBase64(encodedData);
@@ -118,14 +118,14 @@ Future<List<Episode>> fetchEpisode(int code) async {
         results = fakeDocument.querySelectorAll('.chapter-list.cf.mt10');
       }
 
-      for (var epiArray in results) {
-        var epiBlocks = epiArray.querySelectorAll('ul');
-        for (var epiBlock in epiBlocks.reversed) {
-          var epi = epiBlock.querySelectorAll('li');
-          for (var book in epi) {
-            var ep = book.querySelector('a')?.attributes['title'];
-            var link = book.querySelector('a')?.attributes['href'];
-            var em = book.querySelector('em')?.attributes['class'];
+      for (final epiArray in results) {
+        final epiBlocks = epiArray.querySelectorAll('ul');
+        for (final epiBlock in epiBlocks.reversed) {
+          final epi = epiBlock.querySelectorAll('li');
+          for (final book in epi) {
+            final ep = book.querySelector('a')?.attributes['title'];
+            final link = book.querySelector('a')?.attributes['href'];
+            final em = book.querySelector('em')?.attributes['class'];
             if (ep != null && link != null) {
               Episode episode = em != null
                   ? Episode(episode: ep, link: link, em: em)
@@ -230,4 +230,73 @@ Stream<Uint8List> getImagedataStream(Map<String, dynamic> episodeData) async* {
       print('Error fetching image: $e');
     }
   }
+}
+
+Future<List<Book>> searchResult(String keyword) async {
+  List<Book> books = [];
+  late int page;
+  String url = 'https://tw.manhuagui.com/s/${keyword}_p1.html';
+  try {
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: header,
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      // get total searched page, then loop each page to get all the result
+      final document = parser.parse(utf8.decode(response.bodyBytes));
+      final pagee =
+          document.querySelector('.pager')?.children.last.attributes['href'];
+      RegExp exp = RegExp(r'(\d+)');
+      RegExpMatch? match = exp.firstMatch(pagee!);
+      page = int.parse(match![0]!);
+    }
+    await Future.delayed(const Duration(seconds: 1));
+  } catch (e) {
+    print('Error in getting pages: $e');
+    return [];
+  }
+  page = page > 10
+      ? 10
+      : page; // prevent large amount of search, need to fix when search result is too large
+  for (var i = 1; i <= page; i++) {
+    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final p = i.toString();
+      var res = await http
+          .get(
+            Uri.parse('https://tw.manhuagui.com/s/${keyword}_p$p.html'),
+            headers: header,
+          )
+          .timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final document = parser.parse(utf8.decode(res.bodyBytes));
+        final searchResult = document.querySelectorAll('.book-detail');
+
+        for (final book in searchResult) {
+          final title = book.querySelector('dt')?.children.first.text.trim();
+          final asd =
+              book.querySelector('span')?.querySelector('span')?.text.trim();
+          final ep1 =
+              book.querySelector('span')?.querySelector('a')?.text.trim();
+          final ep = '$asd$ep1';
+          final href =
+              book.querySelector('dt')?.children.first.attributes['href'];
+          RegExp exp = RegExp(r'(\d+)');
+          RegExpMatch? match = exp.firstMatch(href!);
+          final code = int.parse(match![0]!);
+          print('$title,$ep,$code');
+          Book booked = Book(title: title!, ep: ep, code: code);
+          books.add(booked);
+        }
+        // await Future.delayed(const Duration(seconds: 1));
+      }
+    } catch (e) {
+      print('Error in searching $page: $e');
+      return [];
+    }
+  }
+  return books;
 }

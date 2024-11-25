@@ -43,54 +43,51 @@ class _EpisodelistState extends State<Episodelist> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => FutureBuilder<Map<String, dynamic>>(
-                        future: getEpsiodeImage(widget.link),
-                        builder: (context, episodeSnapshot) {
-                          if (episodeSnapshot.connectionState ==
-                              ConnectionState.waiting) {
+                builder: (context) => FutureBuilder<Map<String, dynamic>>(
+                  future: getEpsiodeImage(widget.link),
+                  builder: (context, episodeSnapshot) {
+                    if (episodeSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (episodeSnapshot.hasError) {
+                      return Center(
+                          child: Text("Error: ${episodeSnapshot.error}"));
+                    } else if (!episodeSnapshot.hasData ||
+                        episodeSnapshot.data!.isEmpty) {
+                      return const Center(
+                          child: Text("No episode data found."));
+                    } else {
+                      final episodeData = episodeSnapshot.data!;
+                      return StreamBuilder<Uint8List>(
+                        stream: getImagedataStream(episodeData),
+                        builder: (context, imageSnapshot) {
+                          if (imageSnapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              !imageSnapshot.hasData) {
                             return const Center(
                                 child: CircularProgressIndicator());
-                          } else if (episodeSnapshot.hasError) {
+                          } else if (imageSnapshot.hasError) {
                             return Center(
-                                child: Text("Error: ${episodeSnapshot.error}"));
-                          } else if (!episodeSnapshot.hasData ||
-                              episodeSnapshot.data!.isEmpty) {
+                                child: Text("Error: ${imageSnapshot.error}"));
+                          } else if (!imageSnapshot.hasData) {
                             return const Center(
-                                child: Text("No episode data found."));
+                                child: Text("No images available"));
                           } else {
-                            final episodeData = episodeSnapshot.data!;
-                            return StreamBuilder<Uint8List>(
-                              stream: getImagedataStream(episodeData),
-                              builder: (context, imageSnapshot) {
-                                if (imageSnapshot.connectionState ==
-                                        ConnectionState.waiting &&
-                                    !imageSnapshot.hasData) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
-                                } else if (imageSnapshot.hasError) {
-                                  return Center(
-                                      child: Text(
-                                          "Error: ${imageSnapshot.error}"));
-                                } else if (!imageSnapshot.hasData) {
-                                  return const Center(
-                                      child: Text("No images available"));
-                                } else {
-                                  imageData.add(
-                                      imageSnapshot.data!); // Add new image
-                                  return ListView.builder(
-                                    itemCount: imageData.length,
-                                    itemBuilder: (context, index) {
-                                      return Center(
-                                          child:
-                                              Image.memory(imageData[index]));
-                                    },
-                                  );
-                                }
+                            imageData.add(imageSnapshot.data!); // Add new image
+                            return ListView.builder(
+                              itemCount: imageData.length,
+                              itemBuilder: (context, index) {
+                                return Center(
+                                    child: Image.memory(imageData[index]));
                               },
                             );
                           }
                         },
-                      )),
+                      );
+                    }
+                  },
+                ),
+              ),
             );
           },
         ),

@@ -55,8 +55,8 @@ class _BookItemState extends State<BookItem> {
   void _handleTap(bool isInterested) {
     _changeColor();
     widget.isInterested
-        ? deleteMessage(widget.book.code)
-        : writeMessage(widget.book);
+        ? writeMessage(widget.book)
+        : deleteMessage(widget.book.code);
   }
 
   @override
@@ -66,7 +66,7 @@ class _BookItemState extends State<BookItem> {
         ? Colors.blueGrey[widget.colorCode + 800]
         : Colors.amber[widget.colorCode];
     Color? colorcolor = isDarkTheme ? Colors.blueGrey : Colors.white;
-    String text = widget.isInterested ? 'Delete' : 'Interested!';
+    String text = widget.isInterested ? 'Interested!' : 'Delete';
     return SizedBox(
       height: 101,
       child: Row(
