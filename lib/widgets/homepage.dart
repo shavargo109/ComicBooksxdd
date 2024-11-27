@@ -163,7 +163,8 @@ class _HomePageState extends State<HomePage> {
                             book: book,
                             colorCode: colorCode,
                             isInterested: _selectedButtonIndex == 1 ||
-                                _selectedButtonIndex == 2,
+                                _selectedButtonIndex == 2 ||
+                                _selectedButtonIndex == 5,
                             isReadingMode: widget.isReadingMode,
                           );
                         },
