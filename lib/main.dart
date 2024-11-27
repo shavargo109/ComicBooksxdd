@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
-import 'package:tutorial/helpers/webscrap.dart';
 import 'widgets/homepage.dart';
 
 void main() {
@@ -90,9 +89,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
-
 class ModeDrawer extends StatelessWidget {
   const ModeDrawer({super.key});
 
@@ -127,15 +123,6 @@ class ModeDrawer extends StatelessWidget {
                     Navigator.pop(context); // Close drawer after selection
                   },
                 ),
-                // TextButton(
-                //     onPressed: () => fetchEpisode(37124),
-                //     child: Text('testing')),
-                // TextButton(
-                //     onPressed: () => fetchEpisode(47194),
-                //     child: Text('testing2')),
-                // TextButton(
-                //     onPressed: () => fetchEpisode(52741),
-                //     child: Text('testing3')),
               ],
             ),
           ),
