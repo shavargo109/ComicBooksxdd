@@ -47,16 +47,19 @@ class Book {
       );
 }
 
+Future<http.Response> _getReponse(String url) async {
+  final response = await http
+      .get(
+        Uri.parse(url),
+        headers: header,
+      )
+      .timeout(const Duration(seconds: 10));
+  return response;
+}
+
 Future<List<Book>> fetchLatestBooks(bool isLatest) async {
   try {
-    final response = await http.get(
-      Uri.parse('https://tw.manhuagui.com/update/'),
-      headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-        'referer': 'https://www.tw.manhuagui.com/',
-      },
-    ).timeout(const Duration(seconds: 10));
+    final response = await _getReponse('https://tw.manhuagui.com/update/');
 
     if (response.statusCode == 200) {
       final document = parser.parse(utf8.decode(response.bodyBytes));
@@ -95,14 +98,8 @@ Future<List<Episode>> fetchEpisode(int code) async {
   final codeString = code.toString();
   List<Episode> episodeArray = [];
   try {
-    final response = await http.get(
-      Uri.parse('https://tw.manhuagui.com/comic/$codeString/'),
-      headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-        'referer': 'https://www.tw.manhuagui.com/',
-      },
-    ).timeout(const Duration(seconds: 10));
+    final response =
+        await _getReponse('https://tw.manhuagui.com/comic/$codeString/');
 
     if (response.statusCode == 200) {
       final document = parser.parse(utf8.decode(response.bodyBytes));
@@ -146,7 +143,7 @@ Future<List<Episode>> fetchEpisode(int code) async {
 
 Future<Map<String, dynamic>> getEpsiodeImage(String link) async {
   // final episodeURL = await fetchEpisode(code, true);
-  final res = await http.get(Uri.parse("https://tw.manhuagui.com$link"));
+  final res = await _getReponse("https://tw.manhuagui.com$link");
   final regex = RegExp(r"""^.*\}\('(.*)',(\d*),(\d*),'([\w|\+|\/|=]*)'.*$""");
   final match = regex.firstMatch(res.body);
 
@@ -235,15 +232,10 @@ Stream<Uint8List> getImagedataStream(Map<String, dynamic> episodeData) async* {
 Future<List<Book>> searchResult(String keyword) async {
   List<Book> books = [];
   late int page;
-  String url = 'https://tw.manhuagui.com/s/${keyword}_p1.html';
-  try {
-    final response = await http
-        .get(
-          Uri.parse(url),
-          headers: header,
-        )
-        .timeout(const Duration(seconds: 10));
 
+  try {
+    final response =
+        await _getReponse('https://tw.manhuagui.com/s/${keyword}_p1.html');
     if (response.statusCode == 200) {
       // get total searched page, then loop each page to get all the result
       final document = parser.parse(utf8.decode(response.bodyBytes));
@@ -262,15 +254,12 @@ Future<List<Book>> searchResult(String keyword) async {
       ? 10
       : page; // prevent large amount of search, need to fix when search result is too large
   for (var i = 1; i <= page; i++) {
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
     try {
       final p = i.toString();
-      var res = await http
-          .get(
-            Uri.parse('https://tw.manhuagui.com/s/${keyword}_p$p.html'),
-            headers: header,
-          )
-          .timeout(const Duration(seconds: 10));
+      final res =
+          await _getReponse('https://tw.manhuagui.com/s/${keyword}_p$p.html');
+
       if (res.statusCode == 200) {
         final document = parser.parse(utf8.decode(res.bodyBytes));
         final searchResult = document.querySelectorAll('.book-detail');
@@ -287,7 +276,7 @@ Future<List<Book>> searchResult(String keyword) async {
           RegExp exp = RegExp(r'(\d+)');
           RegExpMatch? match = exp.firstMatch(href!);
           final code = int.parse(match![0]!);
-          print('$title,$ep,$code');
+          // print('$title,$ep,$code');
           Book booked = Book(title: title!, ep: ep, code: code);
           books.add(booked);
         }
