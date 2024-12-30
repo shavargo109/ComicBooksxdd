@@ -123,6 +123,7 @@ class ModeDrawer extends StatelessWidget {
                     Navigator.pop(context); // Close drawer after selection
                   },
                 ),
+                // TextButton(onPressed: () => qwer(), child: Text('asd')),
               ],
             ),
           ),
