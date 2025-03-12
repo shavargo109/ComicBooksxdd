@@ -20,6 +20,30 @@ class _HomePageState extends State<HomePage> {
   Future<List<Book>>? _futureBooks;
   int _selectedButtonIndex =
       -1; // Variable to keep track of the selected button
+  final ScrollController _scrollController = ScrollController();
+  var _showScrollToTop = false; // Controls visibility of scroll-to-top button
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 30) {
+        if (!_showScrollToTop) {
+          setState(() => _showScrollToTop = true);
+        }
+      } else {
+        if (_showScrollToTop) {
+          setState(() => _showScrollToTop = false);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<List<Book>> fetchBooks(bool isLatest) async {
     return await fetchLatestBooks(isLatest);
@@ -67,6 +91,14 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
+    );
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0.0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
     );
   }
 
@@ -120,113 +152,132 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     GlobalNotifier modeNotifier = Provider.of<GlobalNotifier>(context);
-    return Column(
-      children: [
-        Expanded(
-          child: _futureBooks == null
-              ? const Center(
-                  child: Text(
-                  "XDD",
-                  style: TextStyle(
-                    fontSize: 20.0,
+    return Scaffold(
+        floatingActionButton: _showScrollToTop
+            ? Container(
+                margin: const EdgeInsets.only(bottom: 40, right: 20),
+                child: FloatingActionButton(
+                  onPressed: _scrollToTop,
+                  backgroundColor: Colors.blueAccent,
+                  child: const Icon(
+                    Icons.arrow_upward,
+                    color: Colors.white,
+                    size: 20,
                   ),
                 ))
-              : FutureBuilder<List<Book>>(
-                  future: _futureBooks,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text("Error: ${snapshot.error}"));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      if (_selectedButtonIndex == 0 ||
-                          _selectedButtonIndex == 4) {
-                        return const Center(
-                            child: Text(
-                                textAlign: TextAlign.center,
-                                "No interested books saved! Please add your favourite books to the list!"));
-                      } else {
-                        return const Center(
-                            child: Text(
-                                textAlign: TextAlign.center,
-                                "No data found!!"));
-                      }
-                    } else {
-                      final books = snapshot.data!;
-                      return ListView.builder(
-                        key: ObjectKey(books[0]),
-                        itemCount: books.length,
-                        itemBuilder: (context, index) {
-                          final book = books[index];
-                          final colorCode = index % 2 == 0 ? 100 : 300;
-                          return BookItem(
-                            book: book,
-                            colorCode: colorCode,
-                            isInterested: _selectedButtonIndex == 1 ||
-                                _selectedButtonIndex == 2 ||
-                                _selectedButtonIndex == 5,
-                            isReadingMode: widget.isReadingMode,
-                          );
-                        },
-                      );
-                    }
-                  },
-                ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            : null,
+        body: Column(
           children: [
             Expanded(
-              child: IconButton.filled(
-                style: _buttonStyle(0, modeNotifier),
-                icon: const Icon(Icons.thumb_up_outlined),
-                selectedIcon: const Icon(Icons.thumb_up),
-                onPressed: () => _onButtonPressed(0),
-              ),
+              child: _futureBooks == null
+                  ? const Center(
+                      child: Text(
+                      "XDD",
+                      style: TextStyle(
+                        fontSize: 20.0,
+                      ),
+                    ))
+                  : FutureBuilder<List<Book>>(
+                      future: _futureBooks,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(
+                              child: Text("Error: ${snapshot.error}"));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          if (_selectedButtonIndex == 0 ||
+                              _selectedButtonIndex == 4) {
+                            return const Center(
+                                child: Text(
+                                    textAlign: TextAlign.center,
+                                    "No interested books saved! Please add your favourite books to the list!"));
+                          } else {
+                            return const Center(
+                                child: Text(
+                                    textAlign: TextAlign.center,
+                                    "No data found!!"));
+                          }
+                        } else {
+                          final books = snapshot.data!;
+                          return ListView.builder(
+                            controller: _scrollController,
+                            key: ObjectKey(books[0]),
+                            itemCount: books.length,
+                            itemBuilder: (context, index) {
+                              final book = books[index];
+                              final colorCode = index % 2 == 0 ? 100 : 300;
+                              return BookItem(
+                                book: book,
+                                colorCode: colorCode,
+                                isInterested: _selectedButtonIndex == 1 ||
+                                    _selectedButtonIndex == 2 ||
+                                    _selectedButtonIndex == 5,
+                                isReadingMode: widget.isReadingMode,
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
             ),
-            Expanded(
-              child: IconButton.filled(
-                style: _buttonStyle(4, modeNotifier),
-                icon: const Icon(Icons.snowshoeing_outlined),
-                selectedIcon: const Icon(Icons.snowshoeing_outlined),
-                onPressed: () => _onButtonPressed(4),
-              ),
-            ),
-            Expanded(
-              child: IconButton.filled(
-                style: _buttonStyle(1, modeNotifier),
-                icon: const Icon(Icons.filter_1_outlined),
-                selectedIcon: const Icon(Icons.filter_1),
-                onPressed: () => _onButtonPressed(1),
-              ),
-            ),
-            Expanded(
-              child: IconButton.filled(
-                style: _buttonStyle(2, modeNotifier),
-                icon: const Icon(Icons.filter_2_outlined),
-                selectedIcon: const Icon(Icons.filter_2),
-                onPressed: () => _onButtonPressed(2),
-              ),
-            ),
-            Expanded(
-              child: IconButton.filled(
-                style: _buttonStyle(3, modeNotifier),
-                icon: const Icon(Icons.bookmark_added_outlined),
-                selectedIcon: const Icon(Icons.bookmark_added),
-                onPressed: () => _onButtonPressed(3),
-              ),
-            ),
-            Expanded(
-              child: IconButton.filled(
-                style: _buttonStyle(5, modeNotifier),
-                icon: const Icon(Icons.search),
-                selectedIcon: const Icon(Icons.search),
-                onPressed: () => _dialogBuilder(context),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: IconButton.filled(
+                    style: _buttonStyle(0, modeNotifier),
+                    icon: const Icon(Icons.thumb_up_outlined),
+                    selectedIcon: const Icon(Icons.thumb_up),
+                    onPressed: () => _onButtonPressed(0),
+                  ),
+                ),
+                Expanded(
+                  child: IconButton.filled(
+                    style: _buttonStyle(4, modeNotifier),
+                    icon: const Icon(Icons.snowshoeing_outlined),
+                    selectedIcon: const Icon(Icons.snowshoeing_outlined),
+                    onPressed: () => _onButtonPressed(4),
+                  ),
+                ),
+                Expanded(
+                  child: IconButton.filled(
+                    style: _buttonStyle(1, modeNotifier),
+                    icon: const Icon(Icons.filter_1_outlined),
+                    selectedIcon: const Icon(Icons.filter_1),
+                    onPressed: () => _onButtonPressed(1),
+                  ),
+                ),
+                Expanded(
+                  child: IconButton.filled(
+                    style: _buttonStyle(2, modeNotifier),
+                    icon: const Icon(Icons.filter_2_outlined),
+                    selectedIcon: const Icon(Icons.filter_2),
+                    onPressed: () => _onButtonPressed(2),
+                  ),
+                ),
+                Expanded(
+                  child: IconButton.filled(
+                    style: _buttonStyle(3, modeNotifier),
+                    icon: const Icon(Icons.bookmark_added_outlined),
+                    selectedIcon: const Icon(Icons.bookmark_added),
+                    onPressed: () => _onButtonPressed(3),
+                  ),
+                ),
+                Expanded(
+                  child: IconButton.filled(
+                    style: _buttonStyle(5, modeNotifier),
+                    icon: const Icon(Icons.search),
+                    selectedIcon: const Icon(Icons.search),
+                    onPressed: () => _dialogBuilder(context),
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
-    );
+        ));
   }
 }
