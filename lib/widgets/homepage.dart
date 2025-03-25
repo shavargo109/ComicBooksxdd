@@ -155,7 +155,9 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
         floatingActionButton: _showScrollToTop
             ? Container(
-                margin: const EdgeInsets.only(bottom: 40, right: 20),
+                height: 40,
+                width: 40,
+                margin: const EdgeInsets.only(bottom: 25),
                 child: FloatingActionButton(
                   onPressed: _scrollToTop,
                   backgroundColor: Colors.blueAccent,
@@ -166,6 +168,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ))
             : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
         body: Column(
           children: [
             Expanded(
