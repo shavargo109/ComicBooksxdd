@@ -174,12 +174,16 @@ class _HomePageState extends State<HomePage> {
             Expanded(
               child: _futureBooks == null
                   ? const Center(
-                      child: Text(
-                      "XDD",
-                      style: TextStyle(
-                        fontSize: 20.0,
+                      child: Image(
+                        image: AssetImage('assets/test.gif'),
                       ),
-                    ))
+                      // child: Text(
+                      // "XDD",
+                      // style: TextStyle(
+                      //   fontSize: 20.0,
+                      // ),
+                      // )
+                    )
                   : FutureBuilder<List<Book>>(
                       future: _futureBooks,
                       builder: (context, snapshot) {
