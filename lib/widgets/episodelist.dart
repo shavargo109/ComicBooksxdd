@@ -106,6 +106,7 @@ class _EpisodelistState extends State<Episodelist> with WidgetsBindingObserver {
                     } else {
                       final episodeData = episodeSnapshot.data!;
                       _imageStream = getImagedataStream(episodeData);
+                      final totalLength = getImageDataLength(episodeData);
                       return StreamBuilder<Uint8List>(
                         stream: _isStreamPaused ? null : _imageStream,
                         builder: (context, imageSnapshot) {
@@ -131,9 +132,23 @@ class _EpisodelistState extends State<Episodelist> with WidgetsBindingObserver {
                                   child: ListView.builder(
                                       itemCount: _imageData.length,
                                       itemBuilder: (context, index) {
-                                        return Center(
-                                            child: Image.memory(
-                                                _imageData[index]));
+                                        print(_imageData.length);
+                                        if (totalLength == _imageData.length &&
+                                            index == _imageData.length - 1) {
+                                          return Center(
+                                              child: Column(
+                                            children: [
+                                              Image.memory(_imageData[index]),
+                                              const Image(
+                                                  image: AssetImage(
+                                                      'assets/test.gif')),
+                                            ],
+                                          ));
+                                        } else {
+                                          return Center(
+                                              child: Image.memory(
+                                                  _imageData[index]));
+                                        }
                                       })),
                             ),
                           );

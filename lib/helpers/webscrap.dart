@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
@@ -227,6 +228,10 @@ Stream<Uint8List> getImagedataStream(Map<String, dynamic> episodeData) async* {
       print('Error fetching image: $e');
     }
   }
+}
+
+int getImageDataLength(Map<String, dynamic> episodeData) {
+  return episodeData['files'].length;
 }
 
 Future<List<Book>> searchResult(String keyword) async {
