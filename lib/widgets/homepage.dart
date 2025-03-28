@@ -85,11 +85,12 @@ class _HomePageState extends State<HomePage> {
             ),
             onSubmitted: (String value) async {
               Navigator.pop(context);
-              // _totalPage = await searchResultPage(value);
+              int totalpages = await searchResultPage(value);
               setState(() {
                 _selectedButtonIndex = 5;
                 _currentPage = 1;
                 _value = value;
+                _totalPage = totalpages;
                 _futureBooks = searchResultContent(value, _currentPage);
               });
             },
@@ -261,7 +262,8 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                         Expanded(
                                           child: IconButton(
-                                              onPressed: _currentPage + 1 > 9
+                                              onPressed: _currentPage + 1 >
+                                                      _totalPage
                                                   ? null
                                                   : () {
                                                       _asd(_currentPage + 1);
