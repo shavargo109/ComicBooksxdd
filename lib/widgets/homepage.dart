@@ -22,7 +22,9 @@ class _HomePageState extends State<HomePage> {
       -1; // Variable to keep track of the selected button
   final ScrollController _scrollController = ScrollController();
   var _showScrollToTop = false; // Controls visibility of scroll-to-top button
-
+  int _totalPage = 0;
+  int _currentPage = 0;
+  String _value = '';
   @override
   void initState() {
     super.initState();
@@ -83,15 +85,27 @@ class _HomePageState extends State<HomePage> {
             ),
             onSubmitted: (String value) async {
               Navigator.pop(context);
+              // _totalPage = await searchResultPage(value);
               setState(() {
                 _selectedButtonIndex = 5;
-                _futureBooks = searchResult(value);
+                _currentPage = 1;
+                _value = value;
+                _futureBooks = searchResultContent(value, _currentPage);
               });
             },
           ),
         );
       },
     );
+  }
+
+  void _asd(int page) {
+    setState(() {
+      _selectedButtonIndex = 5;
+      _currentPage = page;
+      print(_currentPage);
+      _futureBooks = searchResultContent(_value, _currentPage);
+    });
   }
 
   void _scrollToTop() {
@@ -105,7 +119,7 @@ class _HomePageState extends State<HomePage> {
   void _onButtonPressed(int index) {
     setState(() {
       _selectedButtonIndex = index;
-
+      _currentPage = 0;
       switch (index) {
         case 0:
           _futureBooks = fetchInterestedBooks(true);
@@ -217,14 +231,60 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (context, index) {
                               final book = books[index];
                               final colorCode = index % 2 == 0 ? 100 : 300;
-                              return BookItem(
-                                book: book,
-                                colorCode: colorCode,
-                                isInterested: _selectedButtonIndex == 1 ||
-                                    _selectedButtonIndex == 2 ||
-                                    _selectedButtonIndex == 5,
-                                isReadingMode: widget.isReadingMode,
-                              );
+                              if (index == books.length - 1 &&
+                                  _selectedButtonIndex == 5) {
+                                print('wegrthrt');
+                                return Column(
+                                  children: [
+                                    BookItem(
+                                      book: book,
+                                      colorCode: colorCode,
+                                      isInterested: _selectedButtonIndex == 1 ||
+                                          _selectedButtonIndex == 2 ||
+                                          _selectedButtonIndex == 5,
+                                      isReadingMode: widget.isReadingMode,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: IconButton(
+                                              onPressed: _currentPage - 1 == 0
+                                                  ? null
+                                                  : () {
+                                                      _asd(_currentPage - 1);
+                                                    },
+
+                                              // onPressed: () =>
+                                              //     _asd(_currentPage - 1),
+                                              icon:
+                                                  const Icon(Icons.arrow_back)),
+                                        ),
+                                        Expanded(
+                                          child: IconButton(
+                                              onPressed: _currentPage + 1 > 9
+                                                  ? null
+                                                  : () {
+                                                      _asd(_currentPage + 1);
+                                                    },
+                                              // onPressed: () =>
+                                              //     _asd(_currentPage + 1),
+                                              icon: const Icon(
+                                                  Icons.arrow_forward)),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                return BookItem(
+                                  book: book,
+                                  colorCode: colorCode,
+                                  isInterested: _selectedButtonIndex == 1 ||
+                                      _selectedButtonIndex == 2 ||
+                                      _selectedButtonIndex == 5,
+                                  isReadingMode: widget.isReadingMode,
+                                );
+                              }
                             },
                           );
                         }

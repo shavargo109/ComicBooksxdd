@@ -234,9 +234,9 @@ int getImageDataLength(Map<String, dynamic> episodeData) {
   return episodeData['files'].length;
 }
 
-Future<List<Book>> searchResult(String keyword) async {
-  List<Book> books = [];
-  late int page;
+Future<int> searchResultPage(String keyword) async {
+  // List<Book> books = [];
+  int page = 0;
 
   try {
     final response =
@@ -253,44 +253,80 @@ Future<List<Book>> searchResult(String keyword) async {
     await Future.delayed(const Duration(seconds: 1));
   } catch (e) {
     print('Error in getting pages: $e');
-    return [];
+    return page;
   }
-  page = page > 10
-      ? 10
-      : page; // prevent large amount of search, need to fix when search result is too large
-  for (var i = 1; i <= page; i++) {
-    await Future.delayed(const Duration(seconds: 2));
-    try {
-      final p = i.toString();
-      final res =
-          await _getReponse('https://tw.manhuagui.com/s/${keyword}_p$p.html');
+  return page;
+  // page = page > 10
+  //     ? 10
+  //     : page; // prevent large amount of search, need to fix when search result is too large
+  // for (var i = 1; i <= page; i++) {
+  //   await Future.delayed(const Duration(seconds: 2));
+  //   try {
+  //     final p = i.toString();
+  //     final res =
+  //         await _getReponse('https://tw.manhuagui.com/s/${keyword}_p$p.html');
 
-      if (res.statusCode == 200) {
-        final document = parser.parse(utf8.decode(res.bodyBytes));
-        final searchResult = document.querySelectorAll('.book-detail');
+  //     if (res.statusCode == 200) {
+  //       final document = parser.parse(utf8.decode(res.bodyBytes));
+  //       final searchResult = document.querySelectorAll('.book-detail');
 
-        for (final book in searchResult) {
-          final title = book.querySelector('dt')?.children.first.text.trim();
-          final asd =
-              book.querySelector('span')?.querySelector('span')?.text.trim();
-          final ep1 =
-              book.querySelector('span')?.querySelector('a')?.text.trim();
-          final ep = '$asd$ep1';
-          final href =
-              book.querySelector('dt')?.children.first.attributes['href'];
-          RegExp exp = RegExp(r'(\d+)');
-          RegExpMatch? match = exp.firstMatch(href!);
-          final code = int.parse(match![0]!);
-          // print('$title,$ep,$code');
-          Book booked = Book(title: title!, ep: ep, code: code);
-          books.add(booked);
-        }
-        // await Future.delayed(const Duration(seconds: 1));
+  //       for (final book in searchResult) {
+  //         final title = book.querySelector('dt')?.children.first.text.trim();
+  //         final asd =
+  //             book.querySelector('span')?.querySelector('span')?.text.trim();
+  //         final ep1 =
+  //             book.querySelector('span')?.querySelector('a')?.text.trim();
+  //         final ep = '$asd$ep1';
+  //         final href =
+  //             book.querySelector('dt')?.children.first.attributes['href'];
+  //         RegExp exp = RegExp(r'(\d+)');
+  //         RegExpMatch? match = exp.firstMatch(href!);
+  //         final code = int.parse(match![0]!);
+  //         // print('$title,$ep,$code');
+  //         Book booked = Book(title: title!, ep: ep, code: code);
+  //         books.add(booked);
+  //       }
+  //       // await Future.delayed(const Duration(seconds: 1));
+  //     }
+  //   } catch (e) {
+  //     print('Error in searching $page: $e');
+  //     return [];
+  //   }
+  // }
+  // return books;
+}
+
+Future<List<Book>> searchResultContent(String keyword, int page) async {
+  List<Book> books = [];
+  try {
+    final p = page.toString();
+    final res =
+        await _getReponse('https://tw.manhuagui.com/s/${keyword}_p$p.html');
+
+    if (res.statusCode == 200) {
+      final document = parser.parse(utf8.decode(res.bodyBytes));
+      final searchResult = document.querySelectorAll('.book-detail');
+
+      for (final book in searchResult) {
+        final title = book.querySelector('dt')?.children.first.text.trim();
+        final asd =
+            book.querySelector('span')?.querySelector('span')?.text.trim();
+        final ep1 = book.querySelector('span')?.querySelector('a')?.text.trim();
+        final ep = '$asd$ep1';
+        final href =
+            book.querySelector('dt')?.children.first.attributes['href'];
+        RegExp exp = RegExp(r'(\d+)');
+        RegExpMatch? match = exp.firstMatch(href!);
+        final code = int.parse(match![0]!);
+        // print('$title,$ep,$code');
+        Book booked = Book(title: title!, ep: ep, code: code);
+        books.add(booked);
       }
-    } catch (e) {
-      print('Error in searching $page: $e');
-      return [];
+      // await Future.delayed(const Duration(seconds: 1));
     }
+  } catch (e) {
+    print('Error in searching $page: $e');
+    return [];
   }
   return books;
 }

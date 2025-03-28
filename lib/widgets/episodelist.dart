@@ -152,24 +152,6 @@ class _EpisodelistState extends State<Episodelist> with WidgetsBindingObserver {
                                       })),
                             ),
                           );
-
-                          // return InteractiveViewer(
-                          //     minScale: 0.5,
-                          //     maxScale: 2.0,
-                          //     child: ListView.builder(
-                          //         itemCount: _imageData.length,
-                          //         itemBuilder: (context, index) {
-                          //           return Center(
-                          //               child: Image.memory(_imageData[index]));
-                          //         }));
-
-                          // return ListView.builder(
-                          //   itemCount: _imageData.length,
-                          //   itemBuilder: (context, index) {
-                          //     return Center(
-                          //         child: Image.memory(_imageData[index]));
-                          //   },
-                          // );
                         },
                       );
                     }
