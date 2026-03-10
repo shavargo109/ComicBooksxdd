@@ -91,7 +91,7 @@ class _EpisodelistState extends State<Episodelist> with WidgetsBindingObserver {
               context,
               MaterialPageRoute(
                 builder: (context) => FutureBuilder<Map<String, dynamic>>(
-                  future: getEpsiodeImage(widget.link),
+                  future: WebScrap().getEpsiodeImage(widget.link),
                   builder: (context, episodeSnapshot) {
                     if (episodeSnapshot.connectionState ==
                         ConnectionState.waiting) {
@@ -105,8 +105,8 @@ class _EpisodelistState extends State<Episodelist> with WidgetsBindingObserver {
                           child: Text("No episode data found."));
                     } else {
                       final episodeData = episodeSnapshot.data!;
-                      _imageStream = getImagedataStream(episodeData);
-                      final totalLength = getImageDataLength(episodeData);
+                      _imageStream = WebScrap().getImagedataStream(episodeData);
+                      final totalLength = WebScrap().getImageDataLength(episodeData);
                       return StreamBuilder<Uint8List>(
                         stream: _isStreamPaused ? null : _imageStream,
                         builder: (context, imageSnapshot) {

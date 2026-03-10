@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
 import 'widgets/homepage.dart';
+import 'widgets/modedrawer.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,11 @@ class GlobalNotifier extends ChangeNotifier {
   void toggleTheme() {
     _themeMode =
         _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
+
+  void toggleMode() {
+    _isReadingMode ? _isReadingMode = false : _isReadingMode = true;
     notifyListeners();
   }
 
@@ -71,6 +77,13 @@ class MyApp extends StatelessWidget {
               actions: [
                 IconButton(
                   icon: Icon(
+                    value.item2 ? Icons.book : Icons.personal_video,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => themeNotifier.toggleMode(),
+                ),
+                IconButton(
+                  icon: Icon(
                     value.item1 == ThemeMode.dark
                         ? Icons.dark_mode
                         : Icons.light_mode,
@@ -89,44 +102,4 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ModeDrawer extends StatelessWidget {
-  const ModeDrawer({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    GlobalNotifier modeNotifier = Provider.of<GlobalNotifier>(context);
-    return Container(
-        width: 200,
-        child: Drawer(
-          child: Container(
-            color: modeNotifier.isReadingMode ? Colors.green : Colors.blue,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ListTile(
-                  title: const Text(
-                    'Website Mode',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () {
-                    modeNotifier.setWebsiteMode(); // Switch to website mode
-                    Navigator.pop(context); // Close drawer after selection
-                  },
-                ),
-                ListTile(
-                  title: const Text(
-                    'Reading Mode',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () {
-                    modeNotifier.setReadingMode(); // Switch to reading mode
-                    Navigator.pop(context); // Close drawer after selection
-                  },
-                ),
-                // TextButton(onPressed: () => qwer(), child: Text('asd')),
-              ],
-            ),
-          ),
-        ));
-  }
-}

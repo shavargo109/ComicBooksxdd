@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tutorial/widgets/episodelist.dart';
+import 'episodelist.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../helpers/webscrap.dart';
 import '../helpers/loaddata.dart';
@@ -9,14 +9,15 @@ class BookItem extends StatefulWidget {
   final int colorCode;
   final bool isInterested;
   final bool isReadingMode;
+  final bool isStored;
 
-  const BookItem({
-    super.key,
-    required this.book,
-    required this.colorCode,
-    required this.isInterested,
-    required this.isReadingMode,
-  });
+  const BookItem(
+      {super.key,
+      required this.book,
+      required this.colorCode,
+      required this.isInterested,
+      required this.isReadingMode,
+      required this.isStored});
 
   @override
   State<BookItem> createState() => _BookItemState();
@@ -29,7 +30,9 @@ class _BookItemState extends State<BookItem> {
   @override
   void initState() {
     super.initState();
-    _buttonColor = Colors.cyan[widget.colorCode];
+    widget.isReadingMode
+        ? _buttonColor = Colors.green[widget.colorCode]
+        : _buttonColor = Colors.cyan[widget.colorCode];
   }
 
   @override
@@ -39,24 +42,55 @@ class _BookItemState extends State<BookItem> {
   }
 
   void _resetColor() {
-    _buttonColor = Colors.cyan[widget.colorCode];
-    _hasColorChanged = false;
+    if (!_hasColorChanged) {
+      widget.isReadingMode
+          ? _buttonColor = Colors.green[widget.colorCode]
+          : _buttonColor = Colors.cyan[widget.colorCode];
+    }
   }
 
-  void _changeColor() {
-    if (!_hasColorChanged) {
+  void _changeColor(bool isInterested) {
+    if (!_hasColorChanged && isInterested) {
       setState(() {
-        _buttonColor = Colors.green[widget.colorCode];
+        _buttonColor = Colors.red[widget.colorCode];
         _hasColorChanged = true;
       });
     }
   }
 
-  void _handleTap(bool isInterested) {
-    _changeColor();
-    widget.isInterested
-        ? writeMessage(widget.book)
-        : deleteMessage(widget.book.code);
+  void _handleTap(bool isInterested) async {
+    _changeColor(isInterested);
+
+    if (isInterested) {
+      await LoadData().writeMessage(widget.book);
+    } else {
+      // show a dialog to confirm delete the book
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content:
+              Text("Are you sure you want to delete '${widget.book.title}'?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "DELETE",
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirm == null || !confirm) {
+      } else if (confirm) {
+        await LoadData().deleteMessage(widget.book.code);
+      }
+    }
   }
 
   @override
@@ -67,6 +101,9 @@ class _BookItemState extends State<BookItem> {
         : Colors.amber[widget.colorCode];
     Color? colorcolor = isDarkTheme ? Colors.blueGrey : Colors.white;
     String text = widget.isInterested ? 'Interested!' : 'Delete';
+    if (widget.isStored) {
+      _changeColor(true);
+    }
     return SizedBox(
       height: 101,
       child: Row(
@@ -100,7 +137,7 @@ class _BookItemState extends State<BookItem> {
                         builder: (context) => Scaffold(
                           backgroundColor: colorcolor,
                           body: FutureBuilder(
-                            future: fetchEpisode(widget.book.code),
+                            future: WebScrap().fetchEpisode(widget.book.code),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {

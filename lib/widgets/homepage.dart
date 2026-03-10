@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tutorial/helpers/loaddata.dart';
+import '../helpers/loaddata.dart';
 import '../helpers/webscrap.dart';
 import 'bookitem.dart';
 import '../main.dart';
@@ -16,8 +16,13 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+/*
+  make futurebooks as list of listbook and listbool
+  then in the futurebuilder check the bool to see if it's stored in interested or not
+ */
 class _HomePageState extends State<HomePage> {
-  Future<List<Book>>? _futureBooks;
+  // Future<List<Book>>? _futureBooks;
+  Future<List<dynamic>>? _futureBooks;
   int _selectedButtonIndex =
       -1; // Variable to keep track of the selected button
   final ScrollController _scrollController = ScrollController();
@@ -25,6 +30,7 @@ class _HomePageState extends State<HomePage> {
   int _totalPage = 0;
   int _currentPage = 0;
   String _value = '';
+
   @override
   void initState() {
     super.initState();
@@ -47,28 +53,47 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<List<Book>> fetchBooks(bool isLatest) async {
-    return await fetchLatestBooks(isLatest);
+  Future<List<dynamic>> fetchBooks(bool isLatest) async {
+    List<dynamic> booksWithInterest = [];
+    final books = await WebScrap().fetchLatestBooks(isLatest);
+    booksWithInterest.add(books);
+    List<bool> isInterested = [];
+    final data = await LoadData().readMessage();
+    final savedBooks = data['book'] as List<Book>;
+    for (var book in books) {
+      for (var savedBook in savedBooks) {
+        if (savedBook.code == book.code) {
+          isInterested.add(true);
+          break;
+        }
+      }
+      if (isInterested.length < books.indexOf(book) + 1) {
+        isInterested.add(false);
+      }
+    }
+    booksWithInterest.add(isInterested);
+    return booksWithInterest;
   }
 
   Future<List<Book>> fetchInterestedBooks(bool isLatest) async {
-    final books = await fetchLatestBooks(isLatest);
-    final data = await readMessage();
+    final books = await WebScrap().fetchLatestBooks(isLatest);
+    final data = await LoadData().readMessage();
     final savedBooks = data['book'] as List<Book>;
     List<Book> interestedBooks = [];
     for (var book in books) {
       for (var savedBook in savedBooks) {
         if (savedBook.code == book.code) {
           interestedBooks.add(book);
-          await writeMessage(book);
+          await LoadData().writeMessage(book);
         }
       }
     }
+
     return interestedBooks;
   }
 
   Future<List<Book>> fetchAllTimeBooks() async {
-    final data = await readMessage();
+    final data = await LoadData().readMessage();
     return data['book'] as List<Book>;
   }
 
@@ -85,13 +110,14 @@ class _HomePageState extends State<HomePage> {
             ),
             onSubmitted: (String value) async {
               Navigator.pop(context);
-              int totalpages = await searchResultPage(value);
+              int totalpages = await WebScrap().searchResultPage(value);
               setState(() {
                 _selectedButtonIndex = 5;
                 _currentPage = 1;
                 _value = value;
                 _totalPage = totalpages;
-                _futureBooks = searchResultContent(value, _currentPage);
+                _futureBooks =
+                    WebScrap().searchResultContent(value, _currentPage);
               });
             },
           ),
@@ -105,7 +131,7 @@ class _HomePageState extends State<HomePage> {
       _selectedButtonIndex = 5;
       _currentPage = page;
       print(_currentPage);
-      _futureBooks = searchResultContent(_value, _currentPage);
+      _futureBooks = WebScrap().searchResultContent(_value, _currentPage);
     });
   }
 
@@ -118,6 +144,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onButtonPressed(int index) {
+    _showScrollToTop = false;
     setState(() {
       _selectedButtonIndex = index;
       _currentPage = 0;
@@ -141,7 +168,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  ButtonStyle _buttonStyle(int index, GlobalNotifier themeNotifier) {
+  ButtonStyle _buttonStyle(GlobalNotifier themeNotifier, [int index = 99]) {
     bool isSelected = _selectedButtonIndex == index;
     Color primaryColor =
         themeNotifier.isReadingMode ? Colors.green : Colors.blue;
@@ -175,7 +202,8 @@ class _HomePageState extends State<HomePage> {
                 margin: const EdgeInsets.only(bottom: 25),
                 child: FloatingActionButton(
                   onPressed: _scrollToTop,
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor:
+                      modeNotifier.isReadingMode ? Colors.green : Colors.blue,
                   child: const Icon(
                     Icons.arrow_upward,
                     color: Colors.white,
@@ -192,14 +220,8 @@ class _HomePageState extends State<HomePage> {
                       child: Image(
                         image: AssetImage('assets/test.gif'),
                       ),
-                      // child: Text(
-                      // "XDD",
-                      // style: TextStyle(
-                      //   fontSize: 20.0,
-                      // ),
-                      // )
                     )
-                  : FutureBuilder<List<Book>>(
+                  : FutureBuilder<List<dynamic>>(
                       future: _futureBooks,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -224,7 +246,15 @@ class _HomePageState extends State<HomePage> {
                                     "No data found!!"));
                           }
                         } else {
-                          final books = snapshot.data!;
+                          List<Book> books = [];
+                          List<bool> isInterestedList = [];
+                          if (snapshot.data! is List<Book>) {
+                            books = snapshot.data! as List<Book>;
+                          } else {
+                            books = snapshot.data![0] as List<Book>;
+                            isInterestedList = snapshot.data![1] as List<bool>;
+                          }
+
                           return ListView.builder(
                             controller: _scrollController,
                             key: ObjectKey(books[0]),
@@ -234,17 +264,15 @@ class _HomePageState extends State<HomePage> {
                               final colorCode = index % 2 == 0 ? 100 : 300;
                               if (index == books.length - 1 &&
                                   _selectedButtonIndex == 5) {
-                                print('wegrthrt');
+                                // search mode
                                 return Column(
                                   children: [
                                     BookItem(
-                                      book: book,
-                                      colorCode: colorCode,
-                                      isInterested: _selectedButtonIndex == 1 ||
-                                          _selectedButtonIndex == 2 ||
-                                          _selectedButtonIndex == 5,
-                                      isReadingMode: widget.isReadingMode,
-                                    ),
+                                        book: book,
+                                        colorCode: colorCode,
+                                        isInterested: true,
+                                        isReadingMode: widget.isReadingMode,
+                                        isStored: false),
                                     Row(
                                       children: [
                                         Expanded(
@@ -254,9 +282,6 @@ class _HomePageState extends State<HomePage> {
                                                   : () {
                                                       _asd(_currentPage - 1);
                                                     },
-
-                                              // onPressed: () =>
-                                              //     _asd(_currentPage - 1),
                                               icon:
                                                   const Icon(Icons.arrow_back)),
                                         ),
@@ -268,8 +293,6 @@ class _HomePageState extends State<HomePage> {
                                                   : () {
                                                       _asd(_currentPage + 1);
                                                     },
-                                              // onPressed: () =>
-                                              //     _asd(_currentPage + 1),
                                               icon: const Icon(
                                                   Icons.arrow_forward)),
                                         ),
@@ -277,14 +300,24 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ],
                                 );
-                              } else {
+                              } else if (_selectedButtonIndex == 1 ||
+                                  _selectedButtonIndex == 2) {
+                                // get book mode
                                 return BookItem(
                                   book: book,
                                   colorCode: colorCode,
-                                  isInterested: _selectedButtonIndex == 1 ||
-                                      _selectedButtonIndex == 2 ||
-                                      _selectedButtonIndex == 5,
+                                  isInterested: true,
                                   isReadingMode: widget.isReadingMode,
+                                  isStored: isInterestedList[index],
+                                );
+                              } else {
+                                // get interested book mode
+                                return BookItem(
+                                  book: book,
+                                  colorCode: colorCode,
+                                  isInterested: false,
+                                  isReadingMode: widget.isReadingMode,
+                                  isStored: false,
                                 );
                               }
                             },
@@ -298,7 +331,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Expanded(
                   child: IconButton.filled(
-                    style: _buttonStyle(0, modeNotifier),
+                    style: _buttonStyle(modeNotifier, 0),
                     icon: const Icon(Icons.thumb_up_outlined),
                     selectedIcon: const Icon(Icons.thumb_up),
                     onPressed: () => _onButtonPressed(0),
@@ -306,7 +339,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Expanded(
                   child: IconButton.filled(
-                    style: _buttonStyle(4, modeNotifier),
+                    style: _buttonStyle(modeNotifier, 4),
                     icon: const Icon(Icons.snowshoeing_outlined),
                     selectedIcon: const Icon(Icons.snowshoeing_outlined),
                     onPressed: () => _onButtonPressed(4),
@@ -314,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Expanded(
                   child: IconButton.filled(
-                    style: _buttonStyle(1, modeNotifier),
+                    style: _buttonStyle(modeNotifier, 1),
                     icon: const Icon(Icons.filter_1_outlined),
                     selectedIcon: const Icon(Icons.filter_1),
                     onPressed: () => _onButtonPressed(1),
@@ -322,7 +355,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Expanded(
                   child: IconButton.filled(
-                    style: _buttonStyle(2, modeNotifier),
+                    style: _buttonStyle(modeNotifier, 2),
                     icon: const Icon(Icons.filter_2_outlined),
                     selectedIcon: const Icon(Icons.filter_2),
                     onPressed: () => _onButtonPressed(2),
@@ -330,7 +363,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Expanded(
                   child: IconButton.filled(
-                    style: _buttonStyle(3, modeNotifier),
+                    style: _buttonStyle(modeNotifier, 3),
                     icon: const Icon(Icons.bookmark_added_outlined),
                     selectedIcon: const Icon(Icons.bookmark_added),
                     onPressed: () => _onButtonPressed(3),
@@ -338,7 +371,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Expanded(
                   child: IconButton.filled(
-                    style: _buttonStyle(5, modeNotifier),
+                    style: _buttonStyle(modeNotifier, 5),
                     icon: const Icon(Icons.search),
                     selectedIcon: const Icon(Icons.search),
                     onPressed: () => _dialogBuilder(context),
